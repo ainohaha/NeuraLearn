@@ -22,6 +22,7 @@ struct SageOSApp: App {
             ChoicesView()
                 .environment(appModel)
         }
+        .windowStyle(.plain)
         .defaultSize(width: 800, height: 600)
         .windowResizability(.contentSize)
 

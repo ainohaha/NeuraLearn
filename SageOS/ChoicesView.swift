@@ -13,7 +13,7 @@ struct ChoicesView: View {
     @State private var revealed: Set<Int> = []
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             ForEach(choices.indices, id: \.self) { i in
                 ChoiceCard(label: choices[i], isOpen: revealed.contains(i)) {
                     // selection handler — wire later
@@ -50,12 +50,12 @@ private struct ChoiceCard: View {
             Text(label)
                 .font(.title2.weight(.medium))
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity, minHeight: 90)
-                .padding(.horizontal, 28)
+                .frame(maxWidth: .infinity, minHeight: 72)
+                .padding(.horizontal, 32)
                 .opacity(isOpen ? 1 : 0)
         }
         .buttonStyle(.plain)
-        .background(.white.opacity(fillOpacity), in: .rect(cornerRadius: 28))
+        .background(.white.opacity(fillOpacity), in: .capsule)
         .scaleEffect(y: isOpen ? 1 : 0.02, anchor: .top)
         .offset(y: isOpen ? 0 : -12)
         .onHover { isHovering = $0 }
