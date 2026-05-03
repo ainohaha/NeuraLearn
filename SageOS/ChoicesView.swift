@@ -8,12 +8,12 @@ import SwiftUI
 struct ChoicesView: View {
     @Environment(AppModel.self) private var appModel
 
-    private let choices = ["Math", "Reading", "Music", "Art"]
+    private let choices = ["Learn", "Homework", "Practice"]
 
     @State private var revealed: Set<Int> = []
 
     var body: some View {
-        VStack(spacing: 24) {
+        HStack(spacing: 24) {
             ForEach(choices.indices, id: \.self) { i in
                 ChoiceCard(label: choices[i], isOpen: revealed.contains(i)) {
                     // selection handler — wire later
@@ -21,7 +21,7 @@ struct ChoicesView: View {
             }
         }
         .padding(40)
-        .frame(width: 700)
+        .frame(width: 1400)
         .task {
             for i in choices.indices {
                 withAnimation(.easeInOut(duration: 1.0)) {

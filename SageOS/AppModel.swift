@@ -32,12 +32,12 @@ class AppModel {
         SageScene(
             id: "opening",
             url: URL(string: "https://build.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splineswift")!,
-            duration: 5.0
+            duration: 13.0
         ),
         SageScene(
             id: "choices",
             url: URL(string: "https://build.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splineswift")!,
-            duration: 1_000_000,
+            duration: 1_000_00,
             opensWindowID: "choices"
         ),
     ]
