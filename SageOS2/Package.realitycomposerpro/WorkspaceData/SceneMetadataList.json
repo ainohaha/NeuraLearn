@@ -1,0 +1,215 @@
+{
+  "64FE9373-5622-4F73-AF02-99B169F431EF" : {
+    "objectMetadataList" : [
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Group_2060",
+        "Orb_1976",
+        "Shape___1980",
+        "Geometry"
+      ],
+      {
+        "disallowsFraming" : false,
+        "isExpanded" : false,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Group_2060",
+        "Orb_1976"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Group_2060",
+        "Orb_1976",
+        "Shape___1980"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Scenes"
+      ],
+      {
+        "disallowsFraming" : true,
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Group_2060"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Group_2060",
+        "Orb_1976",
+        "Sphere_1979"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "64FE9373-5622-4F73-AF02-99B169F431EF",
+        "Root",
+        "sage_bor"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  },
+  "EE021DE5-32B4-442A-897B-E1B2742229D4" : {
+    "objectMetadataList" : [
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene",
+        "Group___2482"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene",
+        "Group___2482",
+        "Agent_orb_143",
+        "Orb_158",
+        "Shape___162"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene",
+        "Group___2482",
+        "Agent_orb_143",
+        "Orb_158"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene",
+        "Group___2482",
+        "Agent_orb_143"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene",
+        "Group___2482",
+        "Agent_orb_143",
+        "Orb_158",
+        "Sphere_161"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "EE021DE5-32B4-442A-897B-E1B2742229D4",
+        "Root",
+        "sage_bor",
+        "Scenes",
+        "Scene"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  }
+}

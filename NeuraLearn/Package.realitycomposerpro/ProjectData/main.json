@@ -1,0 +1,11 @@
+{
+  "pathsToIds" : {
+    "\/NeuraLearn\/Sources\/NeuraLearn\/NeuraLearn.rkassets\/New%20Folder\/Untitled%20Scene.usda" : "0DF83662-66F6-4137-BB3B-D6BB90A59982",
+    "\/NeuraLearn\/Sources\/NeuraLearn\/NeuraLearn.rkassets\/Scene.usda" : "CBF85C48-C024-4F7D-A63F-6ECAD50EC0FF"
+  },
+  "projectID" : -4917037821858620043,
+  "uuidToIntID" : {
+    "0DF83662-66F6-4137-BB3B-D6BB90A59982" : -7679379463438082967,
+    "CBF85C48-C024-4F7D-A63F-6ECAD50EC0FF" : -2682932165497299794
+  }
+}

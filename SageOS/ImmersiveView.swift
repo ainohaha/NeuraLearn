@@ -1,30 +1,10 @@
-//
-//  ImmersiveView.swift
-//  SageOS
-//
-//  Created by Aino Halonen on 4/3/26.
-//
-
+import SplineRuntime
 import SwiftUI
-import RealityKit
-import RealityKitContent
 
-struct ImmersiveView: View {
+struct ImmersiveView: ImmersiveSpaceContent {
+    let url: URL
 
-    var body: some View {
-        RealityView { content in
-            // Add the initial RealityKit content
-            if let immersiveContentEntity = try? await Entity(named: "Immersive", in: realityKitContentBundle) {
-                content.add(immersiveContentEntity)
-
-                // Put skybox here.  See example in World project available at
-                // https://developer.apple.com/
-            }
-        }
+    var body: some ImmersiveSpaceContent {
+        SplineImmersiveSpaceContent(sceneFileURL: url)
     }
-}
-
-#Preview(immersionStyle: .mixed) {
-    ImmersiveView()
-        .environment(AppModel())
 }

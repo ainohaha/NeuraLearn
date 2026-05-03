@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5E3DE4D02F80396C0085FDA9 /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = 5E3DE4CF2F80396C0085FDA9 /* RealityKitContent */; };
+		5E443A2E2F8DD30500DBAAD3 /* SplineRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 5E443A2D2F8DD30500DBAAD3 /* SplineRuntime */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E443A2E2F8DD30500DBAAD3 /* SplineRuntime in Frameworks */,
 				5E3DE4D02F80396C0085FDA9 /* RealityKitContent in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -94,6 +96,7 @@
 			name = SageOS;
 			packageProductDependencies = (
 				5E3DE4CF2F80396C0085FDA9 /* RealityKitContent */,
+				5E443A2D2F8DD30500DBAAD3 /* SplineRuntime */,
 			);
 			productName = SageOS;
 			productReference = 5E3DE4CA2F80396B0085FDA9 /* SageOS.app */;
@@ -123,6 +126,9 @@
 			);
 			mainGroup = 5E3DE4C12F80396B0085FDA9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5E443A2C2F8DD30500DBAAD3 /* XCRemoteSwiftPackageReference "spline-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5E3DE4CB2F80396B0085FDA9 /* Products */;
 			projectDirPath = "";
@@ -159,6 +165,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = B9AMKHK342;
@@ -172,6 +179,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Aino.SageOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -188,6 +196,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = B9AMKHK342;
@@ -201,6 +210,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Aino.SageOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -356,10 +366,26 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		5E443A2C2F8DD30500DBAAD3 /* XCRemoteSwiftPackageReference "spline-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/splinetool/spline-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.2.53;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		5E3DE4CF2F80396C0085FDA9 /* RealityKitContent */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RealityKitContent;
+		};
+		5E443A2D2F8DD30500DBAAD3 /* SplineRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5E443A2C2F8DD30500DBAAD3 /* XCRemoteSwiftPackageReference "spline-ios" */;
+			productName = SplineRuntime;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

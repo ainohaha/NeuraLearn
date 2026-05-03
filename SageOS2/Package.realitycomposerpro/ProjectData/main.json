@@ -1,0 +1,11 @@
+{
+  "pathsToIds" : {
+    "\/SageOS2\/Sources\/SageOS2\/SageOS2.rkassets\/Scene.usda" : "64FE9373-5622-4F73-AF02-99B169F431EF",
+    "SageOS2\/Sources\/SageOS2\/SageOS2.rkassets\/Scene.usda" : "EE021DE5-32B4-442A-897B-E1B2742229D4"
+  },
+  "projectID" : -1974506996836758379,
+  "uuidToIntID" : {
+    "64FE9373-5622-4F73-AF02-99B169F431EF" : -5935281803484190467,
+    "EE021DE5-32B4-442A-897B-E1B2742229D4" : 2437934050330320249
+  }
+}

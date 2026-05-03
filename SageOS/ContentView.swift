@@ -6,25 +6,20 @@
 //
 
 import SwiftUI
-import RealityKit
-import RealityKitContent
 
 struct ContentView: View {
+    @Environment(AppModel.self) private var appModel
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+    @Environment(\.dismissWindow) private var dismissWindow
 
     var body: some View {
-        VStack {
-            Model3D(named: "Scene", bundle: realityKitContentBundle)
-                .padding(.bottom, 50)
-
-            Text("Hello, world!")
-
-            ToggleImmersiveSpaceButton()
-        }
-        .padding()
+        Color.clear
+            .onAppear {
+                Task {
+                    await openImmersiveSpace(id: appModel.immersiveSpaceID)
+                    dismissWindow(id: "opening")
+                    await appModel.runFlow()
+                }
+            }
     }
-}
-
-#Preview(windowStyle: .automatic) {
-    ContentView()
-        .environment(AppModel())
 }
