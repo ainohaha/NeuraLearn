@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+    @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
 
     var body: some View {
@@ -18,7 +19,7 @@ struct ContentView: View {
                 Task {
                     await openImmersiveSpace(id: appModel.immersiveSpaceID)
                     dismissWindow(id: "opening")
-                    await appModel.runFlow()
+                    await appModel.runFlow(openWindow: openWindow)
                 }
             }
     }

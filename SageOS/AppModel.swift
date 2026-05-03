@@ -11,6 +11,7 @@ struct SageScene: Identifiable {
     let id: String
     let url: URL
     let duration: TimeInterval
+    var opensWindowID: String? = nil
 }
 
 @MainActor
@@ -33,17 +34,23 @@ class AppModel {
             url: URL(string: "https://build.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splineswift")!,
             duration: 5.0
         ),
-        // SageScene(id: "ask",          url: URL(string: "https://build.spline.design/.../scene.splineswift")!, duration: 2.5),
-        // SageScene(id: "choices",      url: URL(string: "https://build.spline.design/.../scene.splineswift")!, duration: 6.0),
-        // SageScene(id: "acknowledging", url: URL(string: "https://build.spline.design/.../scene.splineswift")!, duration: 3.0),
+        SageScene(
+            id: "choices",
+            url: URL(string: "https://build.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splineswift")!,
+            duration: 1_000_000,
+            opensWindowID: "choices"
+        ),
     ]
 
     var sceneIndex: Int = 0
     var currentScene: SageScene { Self.scenes[sceneIndex] }
 
-    func runFlow() async {
+    func runFlow(openWindow: OpenWindowAction) async {
         for i in Self.scenes.indices {
             sceneIndex = i
+            if let windowID = Self.scenes[i].opensWindowID {
+                openWindow(id: windowID)
+            }
             try? await Task.sleep(for: .seconds(Self.scenes[i].duration))
         }
     }

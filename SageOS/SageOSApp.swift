@@ -18,6 +18,13 @@ struct SageOSApp: App {
                 .environment(appModel)
         }
 
+        WindowGroup(id: "choices") {
+            ChoicesView()
+                .environment(appModel)
+        }
+        .defaultSize(width: 800, height: 600)
+        .windowResizability(.contentSize)
+
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView(url: appModel.currentScene.url)
         }
