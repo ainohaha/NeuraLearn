@@ -18,6 +18,13 @@ struct SageOSApp: App {
                 .environment(appModel)
         }
 
+        WindowGroup(id: "gaze-debug") {
+            GazeDebugView()
+                .environment(appModel)
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 380, height: 420)
+
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView(url: appModel.currentScene.url)
         }

@@ -2,6 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSWorldSensingUsageDescription</key>
+	<string>SageOS uses head-pose tracking to record where testers are looking during demos so attention can be aggregated into a heatmap for analysis.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>SageOS hosts a small control page so the researcher's laptop can advance scenes during a gaze study without removing the headset from the participant.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_sageos._tcp</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationPreferredDefaultSceneSessionRole</key>
