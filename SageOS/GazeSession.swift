@@ -40,6 +40,13 @@ final class GazeSession {
     /// Most recent sample. Updated on every poll tick so debug UI can observe.
     private(set) var lastSample: Sample?
 
+    /// CACurrentMediaTime() value when the most recent sample was ingested,
+    /// or nil if no samples have ever arrived. Used by the control page to
+    /// show "ms since last sample" — a more honest liveness signal than
+    /// sample count alone (which can stay stuck for seconds during an off-head
+    /// pause but eventually grow once tracking resumes).
+    private(set) var lastSampleMonotonic: CFTimeInterval?
+
     /// Live state of the WorldTrackingProvider, mirrored from session events.
     /// Watch this in the debug window if samples stop arriving.
     private(set) var providerState: String = "not-started"
@@ -237,6 +244,7 @@ final class GazeSession {
         samples.append(sample)
         sampleCount = samples.count
         lastSample = sample
+        lastSampleMonotonic = CACurrentMediaTime()
         recentSamples.append(sample)
         if recentSamples.count > recentCapacity {
             recentSamples.removeFirst(recentSamples.count - recentCapacity)

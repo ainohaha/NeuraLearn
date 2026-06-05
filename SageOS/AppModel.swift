@@ -5,15 +5,14 @@
 //  Created by Aino Halonen on 4/3/26.
 //
 
+import QuartzCore
 import SwiftUI
 
 struct SageScene: Identifiable {
     let id: String
-    let url: URL
     /// `nil` = button-gated: the Spline scene shows a button/gate and we wait
-    /// forever until `AppModel.advance()` is called (from the debug window now,
-    /// from a Spline event hook later). Non-nil = timed: the flow auto-advances
-    /// after this many seconds, but `advance()` can still cut it short.
+    /// forever until `AppModel.advance()` is called by the operator pressing
+    /// Next on the laptop dashboard. Non-nil = timed (unused at present).
     let duration: TimeInterval?
 }
 
@@ -40,22 +39,21 @@ class AppModel {
     // <space> on the control page (http://<headset-ip>:9876) at each
     // visible transition. That keystroke stamps the new scene id onto
     // subsequent gaze samples.
-    private static let splineURL = AppModel.cloudSceneURL(
-        "https://build.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splineswift")
-
     static let scenes: [SageScene] = [
-        SageScene(id: "hello",               url: splineURL, duration: nil),
-        SageScene(id: "what-would-you-like", url: splineURL, duration: nil),
-        SageScene(id: "assignment",          url: splineURL, duration: nil),
-        SageScene(id: "assignment-2",        url: splineURL, duration: nil),
-        SageScene(id: "assignment-3",        url: splineURL, duration: nil),
-        SageScene(id: "ask",                 url: splineURL, duration: nil),
-        SageScene(id: "adjust",              url: splineURL, duration: nil),
-        SageScene(id: "begin",               url: splineURL, duration: nil),
-        SageScene(id: "adjusted-intro",      url: splineURL, duration: nil),
-        SageScene(id: "adjusted-immersive",  url: splineURL, duration: nil),
-        SageScene(id: "end",                 url: splineURL, duration: nil),
+        SageScene(id: "hello",               duration: nil),
+        SageScene(id: "what-would-you-like", duration: nil),
+        SageScene(id: "assignment",          duration: nil),
+        SageScene(id: "assignment-2",        duration: nil),
+        SageScene(id: "assignment-3",        duration: nil),
+        SageScene(id: "ask",                 duration: nil),
+        SageScene(id: "adjust",              duration: nil),
+        SageScene(id: "begin",               duration: nil),
+        SageScene(id: "adjusted-intro",      duration: nil),
+        SageScene(id: "adjusted-immersive",  duration: nil),
+        SageScene(id: "end",                 duration: nil),
     ]
+
+    private static let splineBase = "https://build.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splineswift"
 
     // Append a per-launch timestamp so CDN/URLCache can't serve a stale publish.
     private static func cloudSceneURL(_ string: String) -> URL {
@@ -64,6 +62,24 @@ class AppModel {
         items.append(URLQueryItem(name: "t", value: String(Int(Date().timeIntervalSince1970))))
         components.queryItems = items
         return components.url!
+    }
+
+    /// Per-session URL with a fresh cache-buster appended. Generating a new
+    /// one on each `startNewSession()` and feeding it to `ImmersiveView`
+    /// forces SplineRuntime to reload the scene from scratch — without this
+    /// the runtime caches the scene and "Start new session" just dismisses
+    /// + re-presents the same already-played state machine, so the demo
+    /// doesn't actually restart from `hello`.
+    private(set) var sessionURL: URL = AppModel.cloudSceneURL(splineBase)
+
+    private func refreshSessionURL() {
+        var c = URLComponents(string: Self.splineBase)!
+        var items = c.queryItems ?? []
+        items.append(URLQueryItem(name: "t", value: String(Int(Date().timeIntervalSince1970))))
+        // UUID is the actual cache-buster — same-second restarts still differ.
+        items.append(URLQueryItem(name: "n", value: UUID().uuidString))
+        c.queryItems = items
+        sessionURL = c.url!
     }
 
     var sceneIndex: Int = 0
@@ -75,11 +91,17 @@ class AppModel {
     /// before the participant sees anything.
     var shouldOpenImmersive = false
 
-    /// Flip to `true` during development to open a 2D debug window that shows
-    /// live gaze yaw/pitch, sample count, current scene name, the most-recent
-    /// trail, and a "Next scene" button. Leave `false` before handing the
-    /// headset to a participant — the participant should not see this.
-    var debugLiveOverlay = true
+    /// Kept only as a flag for any legacy callers; the in-headset debug
+    /// window has been removed entirely. All live monitoring (sample count,
+    /// yaw/pitch, trail, scene, recording state) is on the laptop control
+    /// page — the participant in Guest Mode sees only the immersive scene.
+    var debugLiveOverlay = false
+
+    /// Background watchdog that pings the control server every few seconds
+    /// so it self-heals after the AVP wakes from an off-head suspend.
+    /// `AdvanceServer.start()` is idempotent — a no-op when healthy, a
+    /// rebind when the OS cancelled the listener while the app was asleep.
+    private var serverWatchdog: Task<Void, Never>?
 
     let gaze = GazeSession()
 
@@ -99,12 +121,9 @@ class AppModel {
     private(set) var sessionsRecorded = 0
 
     func preloadScenes() async {
-        let urls = Self.scenes.map(\.url)
-        for url in urls {
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            _ = try? await URLSession.shared.data(for: request)
-        }
+        var request = URLRequest(url: sessionURL)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        _ = try? await URLSession.shared.data(for: request)
     }
 
     /// Wire the laptop control server to AppModel and start it. Called once
@@ -122,6 +141,20 @@ class AppModel {
         advanceServer.stateProvider = { [weak self] () -> AdvanceServer.StateSnapshot in
             guard let self else { return .empty }
             let scene = Self.scenes[self.sceneIndex]
+            let last = self.gaze.lastSample
+            let agoMs: Int
+            if let lastT = self.gaze.lastSampleMonotonic {
+                agoMs = max(0, Int((QuartzCore.CACurrentMediaTime() - lastT) * 1000))
+            } else {
+                agoMs = -1
+            }
+            // Last ~1s of trail at 30Hz. Kept small so the /state payload
+            // stays under ~600 B and we don't tax the AVP serializing on
+            // every poll — heavier traffic was visibly hurting the AirPlay
+            // mirror's frame rate.
+            let trail = self.gaze.recentSamples.suffix(30).map {
+                AdvanceServer.TrailPoint(y: $0.yaw, p: $0.pitch)
+            }
             return AdvanceServer.StateSnapshot(
                 scene: scene.id,
                 index: self.sceneIndex,
@@ -129,7 +162,12 @@ class AppModel {
                 gate: "button",
                 samples: self.gaze.sampleCount,
                 recording: self.gaze.isRecording,
-                sessionsRecorded: self.sessionsRecorded
+                sessionsRecorded: self.sessionsRecorded,
+                yaw: last?.yaw ?? 0,
+                pitch: last?.pitch ?? 0,
+                lastSampleAgoMs: agoMs,
+                providerState: self.gaze.providerState,
+                trail: Array(trail)
             )
         }
         advanceServer.onURLChange = { [weak self] url in
@@ -138,6 +176,30 @@ class AppModel {
         advanceServer.onRunningChange = { [weak self] running in
             self?.advanceServerRunning = running
         }
+        advanceServer.start()
+        startServerWatchdog()
+    }
+
+    /// Idempotent: keeps a ticker alive that re-asserts the control server
+    /// every 3 seconds. When the AVP comes off-head and the app suspends, the
+    /// OS cancels our NWListener; when the next participant puts the headset
+    /// back on, this watchdog ensures the listener is bound again within a
+    /// few seconds, so the laptop control page can reach us without anyone
+    /// having to relaunch anything.
+    func startServerWatchdog() {
+        serverWatchdog?.cancel()
+        serverWatchdog = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                self?.advanceServer.start()
+                try? await Task.sleep(for: .seconds(3))
+            }
+        }
+    }
+
+    /// Called from the SwiftUI scenePhase observer when the app returns to
+    /// active. Cheap: the server's `start()` is idempotent. Also gives the
+    /// watchdog an immediate tick so we don't wait up to 3s after waking.
+    func ensureControlAlive() {
         advanceServer.start()
     }
 
@@ -152,18 +214,21 @@ class AppModel {
             sessionsRecorded += 1
         }
 
-        // Close and reopen the immersive space so SplineImmersiveSpaceContent
-        // is torn down and rebuilt from scratch. Without this, Spline keeps
-        // whatever internal state the last participant left it in.
+        // SplineRuntime exposes no reload API and ignores a sceneFileURL
+        // prop change once a scene is loaded — the ONLY way to reset the
+        // demo back to `hello` is to dismiss the entire ImmersiveSpace and
+        // open it again with a fresh URL. We toggle `shouldOpenImmersive`
+        // false→true and ContentView's onChange handler does the actual
+        // dismiss/open. The fresh UUID cache-buster on the URL ensures
+        // Spline re-fetches from scratch on reopen instead of replaying
+        // any cached state machine from participant N-1.
         if shouldOpenImmersive {
             shouldOpenImmersive = false
             try? await Task.sleep(for: .milliseconds(700))
         }
+        refreshSessionURL()
         sceneIndex = 0
         shouldOpenImmersive = true
-        // Give the immersive space + Spline a moment to load before we start
-        // counting samples, so the first sample isn't tagged before the
-        // participant sees anything.
         try? await Task.sleep(for: .seconds(1.5))
 
         await gaze.start()
@@ -174,6 +239,10 @@ class AppModel {
     /// Stop the current recording session, flush its JSON, and dismiss the
     /// immersive space so the next participant sees a clean slate when you
     /// hit Start. The 2D operator window stays visible the whole time.
+    /// End the recording but LEAVE the immersive scene running. The next
+    /// participant putting on the headset still sees content immediately;
+    /// the operator presses "Start new session" when they're ready to begin
+    /// the next clean recording (which is what resets Spline to `hello`).
     @discardableResult
     func endSession() async -> URL? {
         let url: URL?
@@ -183,7 +252,6 @@ class AppModel {
         } else {
             url = nil
         }
-        shouldOpenImmersive = false
         print("[AppModel] session ended — \(sessionsRecorded) total this run")
         return url
     }

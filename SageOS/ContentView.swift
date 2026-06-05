@@ -5,89 +5,51 @@
 
 import SwiftUI
 
+/// Invisible persistent launcher. SplineRuntime exposes no scene-reload API,
+/// so the only way "Start new session" can actually reset the demo back to
+/// `hello` is by dismissing and reopening the entire ImmersiveSpace — which
+/// requires a long-lived SwiftUI view to hold the `openImmersiveSpace` /
+/// `dismissImmersiveSpace` environment actions. We keep this window alive
+/// for the whole app launch but render it as a single transparent pixel
+/// with no glass backing, so a participant in mixed immersion barely sees
+/// anything in their peripheral vision.
 struct ContentView: View {
     @Environment(AppModel.self) private var appModel
-    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+    @Environment(\.scenePhase)   private var scenePhase
+    @Environment(\.openImmersiveSpace)    private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
-    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("SageOS")
-                .font(.system(size: 44, weight: .bold))
-            Text("Gaze-tracking research probe")
-                .font(.title3)
-                .foregroundStyle(.secondary)
-
-            Divider().padding(.vertical, 6)
-
-            if let url = appModel.advanceServerURL {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Open the control page on your Mac:")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Recommended — works on any Wi-Fi:")
-                            .font(.callout)
-                            .foregroundStyle(.tertiary)
-                        Text("python3 /Users/aikoh/Documents/SageOS/tools/watch_and_open.py")
-                            .font(.system(.body, design: .monospaced).weight(.semibold))
-                            .textSelection(.enabled)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Or, on home/hotspot Wi-Fi, paste in Safari:")
-                            .font(.callout)
-                            .foregroundStyle(.tertiary)
-                        Text(url)
-                            .font(.system(.body, design: .monospaced).weight(.semibold))
-                            .textSelection(.enabled)
+        Color.clear
+            .frame(width: 1, height: 1)
+            .onAppear {
+                Task {
+                    await appModel.preloadScenes()
+                    appModel.setupControlServer()
+                    // Auto-start so the demo runs even if the laptop control
+                    // page never connects (Wi-Fi/hotspot flakiness). The
+                    // operator can still End / Start new session from the
+                    // laptop dashboard — those overwrite this auto-started
+                    // session.
+                    await appModel.startNewSession()
+                }
+            }
+            .onChange(of: appModel.shouldOpenImmersive) { _, shouldOpen in
+                Task {
+                    if shouldOpen {
+                        _ = await openImmersiveSpace(id: appModel.immersiveSpaceID)
+                    } else {
+                        await dismissImmersiveSpace()
                     }
                 }
-            } else {
-                Text("Server starting…")
-                    .foregroundStyle(.secondary)
             }
-
-            Divider().padding(.vertical, 6)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(appModel.gaze.isRecording ? "● recording session" : "○ waiting for Start")
-                    .font(.title3)
-                    .foregroundStyle(appModel.gaze.isRecording ? .green : .secondary)
-                Text("\(appModel.sessionsRecorded) session\(appModel.sessionsRecorded == 1 ? "" : "s") recorded this run")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding(40)
-        .frame(minWidth: 640, minHeight: 480)
-        .onAppear {
-            Task {
-                await appModel.preloadScenes()
-                if appModel.debugLiveOverlay {
-                    openWindow(id: "gaze-debug")
-                }
-                appModel.setupControlServer()
-                // Auto-start the demo + gaze session so the experience runs
-                // even if the laptop control page never connects (school
-                // Wi-Fi blocking, hotspot off, etc.). The operator can still
-                // press End / Start new session from the control page when
-                // it's working — those overwrite this auto-started session.
-                await appModel.startNewSession()
-            }
-        }
-        .onChange(of: appModel.shouldOpenImmersive) { _, shouldOpen in
-            Task {
-                if shouldOpen {
-                    _ = await openImmersiveSpace(id: appModel.immersiveSpaceID)
-                } else {
-                    await dismissImmersiveSpace()
+            // When the AVP wakes from an off-head sleep, scenePhase flips
+            // back to .active. Re-assert the control server immediately so
+            // the laptop dashboard reconnects without lag.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    appModel.ensureControlAlive()
                 }
             }
-        }
     }
 }

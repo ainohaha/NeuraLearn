@@ -81,7 +81,14 @@ def resolve(instance: str, domain: str) -> tuple[str | None, str | None]:
 
 def main() -> None:
     print(f"Watching for {SERVICE} on the local network. Ctrl-C to stop.")
-    seen: set[tuple[str, str]] = set()
+    # instance_name → last URL we opened. We keep this even when the service
+    # vanishes (participant takes the AVP off-head → app suspends → mDNS
+    # stops broadcasting), so when it reappears with the SAME URL we do NOT
+    # spawn a new Safari tab — the existing tab's JS just reconnects to
+    # /state on its own. Only a CHANGED URL (DHCP renew, different subnet,
+    # app restart on a different IP) triggers a fresh tab.
+    opened: dict[str, str] = {}
+    last_seen: set[str] = set()
     while True:
         try:
             found = find_instances()
@@ -89,28 +96,41 @@ def main() -> None:
             print("dns-sd not found — this script is macOS-only.", file=sys.stderr)
             sys.exit(1)
 
-        # Open a tab for any newly-appeared service.
-        for entry in found - seen:
-            instance, domain = entry
+        current_names = {instance for instance, _ in found}
+
+        for instance, domain in found:
             host, port = resolve(instance, domain)
-            if host and port:
-                url = f"http://{host}:{port}"
-                print(f"  + {instance}  →  {url}")
-                # Force Safari: macOS resolves .local hostnames to IPv6
-                # link-local addresses over AWDL, which Safari handles
-                # correctly. Chrome and Firefox can't reach those
-                # addresses without an explicit zone ID, so they fail
-                # with ERR_ADDRESS_UNREACHABLE on isolated Wi-Fi.
-                subprocess.run(["open", "-a", "Safari", url], check=False)
-            else:
-                print(f"  ? {instance} appeared but didn't resolve, retrying…")
+            if not host or not port:
+                if instance not in last_seen:
+                    print(f"  ? {instance} appeared but didn't resolve, retrying…")
+                continue
+            url = f"http://{host}:{port}"
+            prev = opened.get(instance)
+            if prev == url:
+                # Same headset, same URL — silent re-appearance after an
+                # off-head pause. The existing tab is already on this URL
+                # and its polling loop has been waiting; do nothing.
+                if instance not in last_seen:
+                    print(f"  ~ {instance} back online ({url})")
+                continue
+            # First sighting, or the URL changed.
+            tag = "+" if prev is None else "↻"
+            print(f"  {tag} {instance}  →  {url}")
+            # Force Safari: macOS resolves .local hostnames to IPv6
+            # link-local addresses over AWDL, which Safari handles
+            # correctly. Chrome and Firefox can't reach those addresses
+            # without an explicit zone ID, so they fail with
+            # ERR_ADDRESS_UNREACHABLE on isolated Wi-Fi.
+            subprocess.run(["open", "-a", "Safari", url], check=False)
+            opened[instance] = url
 
-        # If a service disappeared, drop it so a re-launch re-opens the tab.
-        for entry in seen - found:
-            instance, _ = entry
-            print(f"  - {instance}  (gone)")
-        seen = found
+        # Disappearances: note once. Don't drop from `opened` — we want to
+        # recognize the same URL on next reappearance.
+        gone = last_seen - current_names
+        for instance in gone:
+            print(f"  - {instance}  (offline — keeping tab; will reuse when it returns)")
 
+        last_seen = current_names
         time.sleep(POLL_SECONDS)
 
 
