@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>NeuraLearn AR</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      overflow: hidden; background: #000; color: #fff;
+      font: 16px -apple-system,system-ui,sans-serif;
+      overscroll-behavior: none; touch-action: none;
+    }
+
+    /* live camera feed — sits behind everything */
+    #cam {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      background: #000;
+    }
+
+    /* Spline scene overlay — transparent background so the camera shows through */
+    spline-viewer {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+      background: transparent !important;
+      --spline-viewer-background: transparent;
+      pointer-events: auto;
+    }
+    /* Spline's bottom-right "Built with Spline" badge — hide for the demo */
+    spline-viewer::part(default-logo) { display: none !important; }
+
+    /* gate screen shown until the user taps Start (browsers require a
+       user gesture before getUserMedia / autoplay video can run) */
+    #gate {
+      position: fixed; inset: 0;
+      z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 28px;
+      background: radial-gradient(ellipse at center, #1c1c22 0%, #08080a 100%);
+      text-align: center;
+    }
+    #gate h1 {
+      font-size: 38px; font-weight: 700;
+      margin: 18px 0 8px;
+      letter-spacing: -0.02em;
+    }
+    #gate p {
+      max-width: 360px;
+      color: #aab;
+      line-height: 1.45;
+      margin: 0 0 26px;
+    }
+    #gate button {
+      background: #2a6fd6;
+      color: white;
+      border: 0;
+      padding: 16px 38px;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 8px 24px rgba(42, 111, 214, .35);
+    }
+    #gate button:active { transform: scale(0.97); }
+    #gate small {
+      display: block;
+      margin-top: 18px;
+      color: #667; font-size: 12px;
+      max-width: 320px;
+    }
+    .icon {
+      width: 84px; height: 84px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #4a8eff 0%, #2a6fd6 100%);
+      box-shadow: 0 12px 30px rgba(74,142,255,.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 38px;
+    }
+
+    /* tiny error toast for camera denial / unsupported browsers */
+    #err {
+      position: fixed; left: 50%; bottom: 28px;
+      transform: translateX(-50%);
+      z-index: 11;
+      background: rgba(220, 80, 80, .92);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 12px;
+      max-width: 88vw;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+    #err.show { display: block; }
+
+    /* hide the gate after start */
+    body.started #gate { display: none; }
+  </style>
+
+  <!-- Spline web runtime. Same scene-graph engine the visionOS build uses,
+       just compiled for the browser. The scene URL on the <spline-viewer>
+       element below is the web export of the same scene; if Spline gave
+       you a different URL, paste it in. -->
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js"></script>
+</head>
+
+<body>
+
+  <!-- Layer 0: live back camera, scaled to cover the screen -->
+  <video id="cam" autoplay playsinline muted></video>
+
+  <!-- Layer 1: the Spline scene, transparent background, on top of the camera -->
+  <spline-viewer id="scene"
+                 url="https://prod.spline.design/GHUXNEykQsZGOnNwvOlk/scene.splinecode"
+                 loading-anim-type="none"
+                 hint
+                 events-target="global">
+  </spline-viewer>
+
+  <!-- Layer 10: the user-gesture gate, dismissed when "Start" is tapped -->
+  <div id="gate">
+    <div class="icon">🪷</div>
+    <h1>NeuraLearn</h1>
+    <p>Tap below to begin. We'll use your phone's back camera so the experience appears in front of you.</p>
+    <button id="start" type="button">Start</button>
+    <small>NeuraLearn needs camera access. Nothing is recorded or sent anywhere.</small>
+  </div>
+
+  <div id="err"></div>
+
+  <script>
+    const cam   = document.getElementById('cam');
+    const gate  = document.getElementById('gate');
+    const start = document.getElementById('start');
+    const err   = document.getElementById('err');
+
+    function showErr(msg) {
+      err.textContent = msg;
+      err.classList.add('show');
+    }
+
+    async function go() {
+      // Browsers strictly require getUserMedia to be called inside a user
+      // gesture handler — that's why this lives behind the Start button.
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showErr("This browser can't access the camera. Try Safari (iOS) or Chrome (Android).");
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },  // back camera if available
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+        cam.srcObject = stream;
+        await cam.play().catch(() => {});  // autoplay-with-gesture
+        document.body.classList.add('started');
+      } catch (e) {
+        if (e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')) {
+          showErr("Camera permission was denied. Reload and tap Allow.");
+        } else if (e && e.name === 'NotFoundError') {
+          showErr("No camera available on this device.");
+        } else {
+          showErr("Couldn't start the camera: " + (e && e.message ? e.message : e));
+        }
+      }
+    }
+
+    start.addEventListener('click', go, { once: false });
+
+    // Keep iOS Safari from grabbing two-finger gestures as a pinch-zoom of
+    // the whole page (we want pinches to reach the Spline scene).
+    document.addEventListener('gesturestart',  e => e.preventDefault());
+    document.addEventListener('gesturechange', e => e.preventDefault());
+    document.addEventListener('gestureend',    e => e.preventDefault());
+  </script>
+</body>
+</html>
