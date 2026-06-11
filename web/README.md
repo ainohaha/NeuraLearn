@@ -18,7 +18,7 @@ The repo is already on GitHub. To make this page reachable from a phone:
    - Source: **Deploy from a branch**
    - Branch: **main**, folder: **/ (root)**
 3. Wait ~1 min for the first build to finish.
-4. Page lives at: **https://ainohaha.github.io/SageOS/web/**
+4. Page lives at: **https://ainohaha.github.io/NeuraLearn/web/**
 
 Re-generate the QR if the URL ends up different:
 ```

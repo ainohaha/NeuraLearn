@@ -17,7 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEFAULT_URL = "https://ainohaha.github.io/SageOS/web/"
+DEFAULT_URL = "https://ainohaha.github.io/NeuraLearn/web/"
 OUT = Path(__file__).resolve().parent.parent / "web" / "qr.png"
 
 
