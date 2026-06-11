@@ -136,6 +136,39 @@
 
     /* hide the gate after start */
     body.started #gate { display: none; }
+
+    /* Landscape-required overlay. Sits above the gate. CSS-only — when
+       the device flips to landscape, the @media rule un-displays it, so
+       the gate (and then the demo) shows through. */
+    #rotate {
+      position: fixed; inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #1c1c22 0%, #08080a 100%);
+      text-align: center; padding: 40px;
+    }
+    @media (orientation: portrait) {
+      #rotate { display: flex; }
+    }
+    #rotate .rotate-glyph {
+      font-size: 96px;
+      display: inline-block;
+      animation: nudge 1.6s ease-in-out infinite;
+    }
+    @keyframes nudge {
+      0%, 100% { transform: rotate(-15deg); }
+      50%      { transform: rotate(75deg); }
+    }
+    #rotate h2 {
+      font-size: 28px; font-weight: 700;
+      margin: 22px 0 8px;
+    }
+    #rotate p {
+      max-width: 320px; color: #aab;
+      margin: 0 auto;
+      line-height: 1.45;
+    }
   </style>
 
   <!-- Spline web runtime. Same scene-graph engine the visionOS build uses,
@@ -150,6 +183,17 @@
 </head>
 
 <body>
+
+  <!-- Layer 20: landscape-required prompt. CSS @media (orientation: portrait)
+       displays this only while the phone is held upright; the moment they
+       rotate, it un-displays and the gate (or running demo) shows. -->
+  <div id="rotate">
+    <div>
+      <div class="rotate-glyph">📱</div>
+      <h2>Rotate your phone</h2>
+      <p>Turn it sideways to get the full view of the demo.</p>
+    </div>
+  </div>
 
   <!-- Layer 0: live back camera, scaled to cover the screen -->
   <video id="cam" autoplay playsinline muted></video>
@@ -166,10 +210,6 @@
     <p>The experience will appear in front of you. Here's how to interact:</p>
 
     <div class="hints">
-      <div class="hint">
-        <div class="gesture">⟳</div>
-        <div class="copy"><b>Rotate phone</b><span>Turn sideways for full-screen view</span></div>
-      </div>
       <div class="hint">
         <div class="gesture">↻</div>
         <div class="copy"><b>Drag</b><span>One finger to rotate the scene</span></div>
