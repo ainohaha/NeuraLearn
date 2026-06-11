@@ -79,13 +79,11 @@
       max-width: 320px;
     }
     .icon {
-      width: 84px; height: 84px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #4a8eff 0%, #2a6fd6 100%);
-      box-shadow: 0 12px 30px rgba(74,142,255,.4);
+      width: 110px; height: 110px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 38px;
+      filter: drop-shadow(0 12px 30px rgba(74,142,255,.45));
     }
+    .icon img { width: 100%; height: 100%; object-fit: contain; }
 
     /* tiny error toast for camera denial / unsupported browsers */
     #err {
@@ -129,7 +127,7 @@
 
   <!-- Layer 10: the user-gesture gate, dismissed when "Start" is tapped -->
   <div id="gate">
-    <div class="icon">🪷</div>
+    <div class="icon"><img src="sage.png" alt=""></div>
     <h1>NeuraLearn</h1>
     <p>Tap below to begin. We'll use your phone's back camera so the experience appears in front of you.</p>
     <button id="start" type="button">Start</button>
@@ -181,6 +179,22 @@
     }
 
     start.addEventListener('click', go, { once: false });
+
+    // Surface a clear error if Spline never loads (most often because the
+    // scene URL hasn't been published for web — `.splinecode` URLs are
+    // only generated when you do an explicit Code Export → Web in
+    // Spline). Without this guard the page just spins forever.
+    const scene = document.getElementById('scene');
+    let loaded = false;
+    scene.addEventListener('load',       () => { loaded = true; });
+    scene.addEventListener('error',      () => {
+      showErr("Couldn't load the Spline scene. Re-publish it for Web in Spline (Export → Code Export → React) and paste the new .splinecode URL into web/index.html.");
+    });
+    setTimeout(() => {
+      if (!loaded) {
+        showErr("Spline scene is taking too long. Likely the .splinecode URL isn't published yet — do Export → Code Export → React in Spline and paste the URL into web/index.html.");
+      }
+    }, 12000);
 
     // Keep iOS Safari from grabbing two-finger gestures as a pinch-zoom of
     // the whole page (we want pinches to reach the Spline scene).
