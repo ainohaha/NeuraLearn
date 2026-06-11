@@ -118,22 +118,6 @@
     .hint .copy b { display: block; font-weight: 600; color: #f1f3f7; }
     .hint .copy span { color: #8a8f9c; font-size: 13px; }
 
-    /* tiny error toast for camera denial / unsupported browsers */
-    #err {
-      position: fixed; left: 50%; bottom: 28px;
-      transform: translateX(-50%);
-      z-index: 11;
-      background: rgba(220, 80, 80, .92);
-      color: white;
-      padding: 14px 18px;
-      border-radius: 12px;
-      max-width: 88vw;
-      font-size: 14px;
-      text-align: center;
-      display: none;
-    }
-    #err.show { display: block; }
-
     /* hide the gate after start */
     body.started #gate { display: none; }
 
@@ -228,27 +212,44 @@
     <small>NeuraLearn needs camera access. Nothing is recorded or sent anywhere.</small>
   </div>
 
-  <div id="err"></div>
-
   <script>
     const cam   = document.getElementById('cam');
     const gate  = document.getElementById('gate');
     const start = document.getElementById('start');
-    const err   = document.getElementById('err');
 
-    function showErr(msg) {
-      err.textContent = msg;
-      err.classList.add('show');
+    function isLandscape() {
+      // matchMedia handles iOS / Android consistently; window.orientation
+      // is deprecated. Treat anything wider than tall as landscape for the
+      // edge cases where matchMedia is briefly stale (mid-rotation).
+      const m = window.matchMedia('(orientation: landscape)');
+      return m.matches || window.innerWidth > window.innerHeight;
     }
 
+    // Enable/disable the Start button as the orientation changes. The CSS
+    // #rotate overlay already hides the whole gate while in portrait, but
+    // the explicit JS guard means the button can never fire its handler
+    // from a stale tap that lands on the gate during a rotation.
+    function syncStartEnabled() {
+      start.disabled = !isLandscape();
+      start.style.opacity = isLandscape() ? '1' : '0.5';
+    }
+    window.addEventListener('orientationchange', syncStartEnabled);
+    window.addEventListener('resize',            syncStartEnabled);
+    syncStartEnabled();
+
     async function go() {
+      if (!isLandscape()) {
+        // Defensive: shouldn't be reachable, but if a stray tap fires
+        // while the device is portrait, refuse and let the rotate prompt
+        // do its job.
+        return;
+      }
       // Browsers strictly require getUserMedia to be called inside a user
       // gesture handler — that's why this lives behind the Start button.
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showErr("This browser can't access the camera. Try Safari (iOS) or Chrome (Android).");
+        alert("This browser can't access the camera. Try Safari (iOS) or Chrome (Android).");
         return;
       }
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -262,33 +263,20 @@
         await cam.play().catch(() => {});  // autoplay-with-gesture
         document.body.classList.add('started');
       } catch (e) {
-        if (e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')) {
-          showErr("Camera permission was denied. Reload and tap Allow.");
-        } else if (e && e.name === 'NotFoundError') {
-          showErr("No camera available on this device.");
-        } else {
-          showErr("Couldn't start the camera: " + (e && e.message ? e.message : e));
-        }
+        const msg = (e && e.name === 'NotAllowedError')   ? "Camera permission was denied. Reload and tap Allow."
+                 : (e && e.name === 'NotFoundError')      ? "No camera available on this device."
+                 : ("Couldn't start the camera: " + (e && e.message ? e.message : e));
+        alert(msg);
       }
     }
 
     start.addEventListener('click', go, { once: false });
 
-    // Surface a clear error if Spline never loads (most often because the
-    // scene URL hasn't been published for web — `.splinecode` URLs are
-    // only generated when you do an explicit Code Export → Web in
-    // Spline). Without this guard the page just spins forever.
-    const scene = document.getElementById('scene');
-    let loaded = false;
-    scene.addEventListener('load',       () => { loaded = true; });
-    scene.addEventListener('error',      () => {
-      showErr("Couldn't load the Spline scene. Re-publish it for Web in Spline (Export → Code Export → React) and paste the new .splinecode URL into web/index.html.");
-    });
-    setTimeout(() => {
-      if (!loaded) {
-        showErr("Spline scene is taking too long. Likely the .splinecode URL isn't published yet — do Export → Code Export → React in Spline and paste the URL into web/index.html.");
-      }
-    }, 12000);
+    // (Spline-load timeout watcher removed — was surfacing a red toast
+    // even after the scene successfully loaded in some Safari versions
+    // because spline-viewer doesn't always dispatch a 'load' event.
+    // The scene URL is now stable; if it ever breaks, the page will
+    // silently spin and we'll catch it in testing.)
 
     // Keep iOS Safari from grabbing two-finger gestures as a pinch-zoom of
     // the whole page (we want pinches to reach the Spline scene).
