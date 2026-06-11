@@ -1,0 +1,49 @@
+name: Refresh AR QR
+
+# Auto-regenerates web/qr.png on every push to main so the QR's cache-buster
+# (?v=<short-sha>) always matches the latest deploy. The `[skip-qr]` tag in
+# this job's own commit prevents an infinite re-trigger loop.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'tools/gen_qr.py'
+      - '.github/workflows/refresh-qr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-qr:
+    if: "!contains(github.event.head_commit.message, '[skip-qr]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install qrcode
+        run: pip install 'qrcode[pil]'
+
+      - name: Regenerate QR for this commit
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          python3 tools/gen_qr.py "https://ainohaha.github.io/NeuraLearn/web/?v=$SHA"
+
+      - name: Commit + push if QR changed
+        run: |
+          if git diff --quiet web/qr.png; then
+            echo "QR unchanged — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          SHA=$(git rev-parse --short HEAD)
+          git add web/qr.png
+          git commit -m "AR demo: auto-refresh QR to $SHA [skip-qr]"
+          git push
