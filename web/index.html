@@ -13,8 +13,13 @@
       margin: 0; padding: 0; height: 100%; width: 100%;
       overflow: hidden; background: #000; color: #fff;
       font: 16px -apple-system,system-ui,sans-serif;
-      overscroll-behavior: none; touch-action: none;
+      overscroll-behavior: none;
     }
+    /* Block page-level touch gestures only AFTER the demo starts, so the
+       gate can still scroll vertically to reach the Start button on
+       short landscape viewports. Once the AR scene is live, we want the
+       page itself frozen and all touches going to Spline. */
+    body.started { touch-action: none; }
 
     /* live camera feed — sits behind everything */
     #cam {
@@ -44,15 +49,24 @@
     spline-viewer::part(default-logo) { display: none !important; }
 
     /* gate screen shown until the user taps Start (browsers require a
-       user gesture before getUserMedia / autoplay video can run) */
+       user gesture before getUserMedia / autoplay video can run).
+       Starts scrolled to the top (logo first) and is internally
+       scrollable — in landscape on a small phone the icon + hints +
+       button stack is taller than the viewport, and we want the Start
+       button to always be reachable by scrolling. */
     #gate {
       position: fixed; inset: 0;
       z-index: 10;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 40px 28px;
+      align-items: center; justify-content: flex-start;
+      padding: 32px 28px 40px;
       background: radial-gradient(ellipse at center, #1c1c22 0%, #08080a 100%);
       text-align: center;
+      overflow-y: auto;
+      overflow-x: hidden;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
     #gate h1 {
       font-size: 38px; font-weight: 700;
@@ -233,9 +247,20 @@
       start.disabled = !isLandscape();
       start.style.opacity = isLandscape() ? '1' : '0.5';
     }
-    window.addEventListener('orientationchange', syncStartEnabled);
-    window.addEventListener('resize',            syncStartEnabled);
+    // After rotating to landscape, snap the gate scroll position to the
+    // top so the visitor sees the SageOS logo first rather than waking up
+    // on whatever offset the gate had while in portrait.
+    function snapGateToTop() {
+      gate.scrollTop = 0;
+    }
+    window.addEventListener('orientationchange', () => {
+      syncStartEnabled();
+      // Wait a tick for the new viewport size to settle before snapping.
+      setTimeout(snapGateToTop, 50);
+    });
+    window.addEventListener('resize', syncStartEnabled);
     syncStartEnabled();
+    snapGateToTop();
 
     async function go() {
       if (!isLandscape()) {
