@@ -106,10 +106,14 @@
   </style>
 
   <!-- Spline web runtime. Same scene-graph engine the visionOS build uses,
-       just compiled for the browser. The scene URL on the <spline-viewer>
-       element below is the web export of the same scene; if Spline gave
-       you a different URL, paste it in. -->
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.27/build/spline-viewer.js"></script>
+       just compiled for the browser. Using `@latest` so a newer-than-the-
+       scene runtime never breaks load. -->
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@latest/build/spline-viewer.js"></script>
+
+  <!-- Cache-bust: don't let Safari/GitHub Pages serve a stale copy. -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 
 <body>
@@ -119,10 +123,7 @@
 
   <!-- Layer 1: the Spline scene, transparent background, on top of the camera -->
   <spline-viewer id="scene"
-                 url="https://prod.spline.design/ucdWxd1ENBQYMa-Y/scene.splinecode"
-                 loading-anim-type="none"
-                 hint
-                 events-target="global">
+                 url="https://prod.spline.design/ucdWxd1ENBQYMa-Y/scene.splinecode">
   </spline-viewer>
 
   <!-- Layer 10: the user-gesture gate, dismissed when "Start" is tapped -->
