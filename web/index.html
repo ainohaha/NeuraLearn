@@ -31,10 +31,9 @@
     }
 
     /* Spline scene overlay — transparent background so the camera shows
-       through. Scaled below 1.0 to push the scene visually further back;
-       the Spline scene was authored for visionOS arm's-length viewing, so
-       without this it renders right in the viewer's face. Tune `--scene-
-       scale` if it ends up too small/too big. */
+       through. Rendered at natural scale (scaling clipped the scene
+       earlier; the cleaner fix is to author the Spline scene at a
+       further-back camera angle in the editor if it ends up too close). */
     spline-viewer {
       position: fixed; inset: 0;
       width: 100%; height: 100%;
@@ -42,8 +41,6 @@
       background: transparent !important;
       --spline-viewer-background: transparent;
       pointer-events: auto;
-      transform: scale(0.6);
-      transform-origin: center center;
     }
     /* Spline's bottom-right "Built with Spline" badge — hide for the demo */
     spline-viewer::part(default-logo) { display: none !important; }
@@ -197,8 +194,12 @@
   <video id="cam" autoplay playsinline muted></video>
 
   <!-- Layer 1: the Spline scene, transparent background, on top of the camera -->
+  <!-- url is intentionally omitted here so the Spline runtime doesn't
+       start downloading + rendering the scene until the visitor taps
+       Start. JS below sets the `url` attribute, which triggers
+       spline-viewer to load. -->
   <spline-viewer id="scene"
-                 url="https://prod.spline.design/ucdWxd1ENBQYMa-Y/scene.splinecode">
+                 data-scene-url="https://prod.spline.design/ucdWxd1ENBQYMa-Y/scene.splinecode">
   </spline-viewer>
 
   <!-- Layer 10: the user-gesture gate, dismissed when "Start" is tapped -->
@@ -287,6 +288,15 @@
         cam.srcObject = stream;
         await cam.play().catch(() => {});  // autoplay-with-gesture
         document.body.classList.add('started');
+        // Kick off Spline loading now that the visitor has actually
+        // started the experience. The url attribute is what
+        // <spline-viewer> watches for, so setting it here is what
+        // triggers the scene fetch + render.
+        const scene = document.getElementById('scene');
+        const sceneURL = scene.getAttribute('data-scene-url');
+        if (sceneURL && !scene.getAttribute('url')) {
+          scene.setAttribute('url', sceneURL);
+        }
       } catch (e) {
         const msg = (e && e.name === 'NotAllowedError')   ? "Camera permission was denied. Reload and tap Allow."
                  : (e && e.name === 'NotFoundError')      ? "No camera available on this device."
