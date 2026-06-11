@@ -25,7 +25,11 @@
       background: #000;
     }
 
-    /* Spline scene overlay — transparent background so the camera shows through */
+    /* Spline scene overlay — transparent background so the camera shows
+       through. Scaled below 1.0 to push the scene visually further back;
+       the Spline scene was authored for visionOS arm's-length viewing, so
+       without this it renders right in the viewer's face. Tune `--scene-
+       scale` if it ends up too small/too big. */
     spline-viewer {
       position: fixed; inset: 0;
       width: 100%; height: 100%;
@@ -33,6 +37,8 @@
       background: transparent !important;
       --spline-viewer-background: transparent;
       pointer-events: auto;
+      transform: scale(0.6);
+      transform-origin: center center;
     }
     /* Spline's bottom-right "Built with Spline" badge — hide for the demo */
     spline-viewer::part(default-logo) { display: none !important; }
@@ -85,6 +91,33 @@
     }
     .icon img { width: 100%; height: 100%; object-fit: contain; }
 
+    /* onboarding hints — three rows of gesture, label, sub-label */
+    .hints {
+      display: flex; flex-direction: column;
+      gap: 14px;
+      margin: 6px 0 26px;
+      width: 100%; max-width: 340px;
+    }
+    .hint {
+      display: flex; align-items: center;
+      gap: 16px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      text-align: left;
+    }
+    .hint .gesture {
+      width: 44px; height: 44px; flex: 0 0 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(74,142,255,0.18);
+      border-radius: 10px;
+      font-size: 22px;
+    }
+    .hint .copy { line-height: 1.25; }
+    .hint .copy b { display: block; font-weight: 600; color: #f1f3f7; }
+    .hint .copy span { color: #8a8f9c; font-size: 13px; }
+
     /* tiny error toast for camera denial / unsupported browsers */
     #err {
       position: fixed; left: 50%; bottom: 28px;
@@ -130,7 +163,27 @@
   <div id="gate">
     <div class="icon"><img src="sage.png" alt=""></div>
     <h1>NeuraLearn</h1>
-    <p>Tap below to begin. We'll use your phone's back camera so the experience appears in front of you.</p>
+    <p>The experience will appear in front of you. Here's how to interact:</p>
+
+    <div class="hints">
+      <div class="hint">
+        <div class="gesture">⟳</div>
+        <div class="copy"><b>Rotate phone</b><span>Turn sideways for full-screen view</span></div>
+      </div>
+      <div class="hint">
+        <div class="gesture">↻</div>
+        <div class="copy"><b>Drag</b><span>One finger to rotate the scene</span></div>
+      </div>
+      <div class="hint">
+        <div class="gesture">⤡</div>
+        <div class="copy"><b>Pinch</b><span>Two fingers to zoom in and out</span></div>
+      </div>
+      <div class="hint">
+        <div class="gesture">☝︎</div>
+        <div class="copy"><b>Tap</b><span>Press buttons in the scene to advance</span></div>
+      </div>
+    </div>
+
     <button id="start" type="button">Start</button>
     <small>NeuraLearn needs camera access. Nothing is recorded or sent anywhere.</small>
   </div>
